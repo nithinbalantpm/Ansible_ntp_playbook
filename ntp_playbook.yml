@@ -1,0 +1,35 @@
+---
+ - hosts: webservers
+   tasks:
+   - name: set timezone
+     shell: timedatectl set-timezone Etc/UTC
+
+   - name: Install NTP
+     apt: name=ntp state=installed
+     tags: ntp
+
+   - name: Copy over the NTP configuration
+     template: src=./templates/ntp.conf dest=/etc/ntp.conf
+     notify:
+     - restart ntp
+     tags: ntp
+
+   - name: Make sure NTP is stopped
+     service: name=ntp state=stopped
+     tags: ntp
+
+   - name: Sync time initialy
+     shell: ntpdate 10.10.0.173
+     tags: ntp
+
+   - name: Make sure NTP is started up
+     service: name=ntp state=started
+     tags: ntp
+
+   - name: Sync hwclock
+     shell: hwclock -w
+     tags: ntp
+
+   handlers:
+   - name: restart ntp
+     service: name=ntp state=restarted
